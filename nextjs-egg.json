@@ -26,13 +26,7 @@
 
   "file_denylist": [],
 
-  "startup": "cd /home/container && \
-if [ \"${EGG_AUTO_UPDATE}\" = \"1\" ]; then \
-  echo '[AUTO-UPDATE] Updating start-modules.sh from GitHub...'; \
-  curl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o start-modules.sh; \
-  chmod +x start-modules.sh; \
-fi; \
-bash ./start-modules.sh",
+  "startup": "cd /home/container && if [ \"${EGG_AUTO_UPDATE}\" = \"1\" ]; then echo '[AUTO-UPDATE] Updating start-modules.sh from GitHub...'; curl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o start-modules.sh; chmod +x start-modules.sh; fi; bash ./start-modules.sh",
 
   "config": {
     "files": "{}",
