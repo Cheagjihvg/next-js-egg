@@ -2,13 +2,14 @@
   "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
   "meta": {
     "version": "PTDL_v2",
-    "update_url": "https://raw.githubusercontent.com/joopdev/nextjs-egg-pterodactyl/refs/heads/main/nextjs-egg.json"
+    "update_url": "https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/nextjs-egg.json"
   },
 
-  "exported_at": "2025-12-17T14:00:00+01:00",
-  "name": "Next JS",
-  "author": "info@joopdev.com",
-  "description": "Host a Next.js application with reliable 0.0.0.0 binding and auto package manager detection.",
+  "exported_at": "2026-06-11T00:00:00+00:00",
+
+  "name": "Next JS (Modules + GitHub + Cloudflared + Cron)",
+  "author": "kun + joopdev",
+  "description": "Next.js egg with Node version selector, GitHub module loader, Cloudflare Tunnel, and Cron support.",
 
   "features": null,
 
@@ -20,17 +21,16 @@
     "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22",
     "Node.js 21": "ghcr.io/parkervcp/yolks:nodejs_21",
     "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20",
-    "Node.js 19": "ghcr.io/parkervcp/yolks:nodejs_19",
     "Node.js 18": "ghcr.io/parkervcp/yolks:nodejs_18"
   },
 
   "file_denylist": [],
 
-  "startup": "cd /home/container; if [ ! -f package.json ]; then echo 'No package.json found. Creating Next.js project...'; npm init -y; npm pkg set type=\"module\"; npm pkg set scripts.dev=\"next dev\"; npm pkg set scripts.build=\"next build\"; npm pkg set scripts.start=\"next start\"; npm install next@${NEXT_VERSION:-latest} react react-dom; fi; if [ \"${AUTO_UPDATE}\" = \"1\" ] && [ -d .git ]; then git pull; fi; corepack enable >/dev/null 2>&1 || true; PM=${PACKAGE_MANAGER:-auto}; if [ \"$PM\" = \"auto\" ]; then if [ -f pnpm-lock.yaml ]; then PM=pnpm; elif [ -f yarn.lock ]; then PM=yarn; else PM=npm; fi; fi; if [ \"$NODE_RUN_ENV\" = \"start\" ]; then echo 'Building Next.js...'; $PM run build; fi; echo 'Starting Next.js...'; $PM run ${NODE_RUN_ENV} -H 0.0.0.0 -p ${SERVER_PORT}",
+  "startup": "cd /home/container && bash ./start-modules.sh",
 
   "config": {
     "files": "{}",
-    "startup": "{\n  \"done\": \"ready in\"\n}",
+    "startup": "{ \"done\": \"Server ready\" }",
     "logs": "{}",
     "stop": "^C"
   },
@@ -39,19 +39,21 @@
     "installation": {
       "container": "node:20-bullseye-slim",
       "entrypoint": "bash",
-      "script": "#!/bin/bash\napt update\napt install -y git curl jq file unzip make gcc g++ python3 libtool\n\nmkdir -p /mnt/server\ncd /mnt/server\n\nif [ -n \"${GIT_URL}\" ]; then\n    if [[ ${GIT_URL} != *.git ]]; then\n        GIT_URL=${GIT_URL%/}.git\n    fi\n\n    if [ -n \"${USERNAME}\" ] && [ -n \"${ACCESS_TOKEN}\" ]; then\n        GIT_URL=\"https://${USERNAME}:${ACCESS_TOKEN}@$(echo ${GIT_URL} | cut -d/ -f3-)\"\n    fi\n\n    if [ ! \"$(ls -A /mnt/server)\" ]; then\n        git clone \"${GIT_URL}\" .\n    fi\nfi\n\nif [ -f /mnt/server/package.json ]; then\n    corepack enable >/dev/null 2>&1 || true\n    PM=${PACKAGE_MANAGER:-auto}\n\n    if [ \"$PM\" = \"auto\" ]; then\n        if [ -f pnpm-lock.yaml ]; then PM=pnpm;\n        elif [ -f yarn.lock ]; then PM=yarn;\n        else PM=npm;\n        fi\n    fi\n\n    if [ \"$PM\" = \"pnpm\" ]; then pnpm install --prod;\n    elif [ \"$PM\" = \"yarn\" ]; then yarn install;\n    else npm install;\n    fi\nfi\n\necho \"install complete\"\nexit 0"
+      "script": "#!/bin/bash\nset -e\n\napt update\napt install -y git curl wget cron bash\n\nmkdir -p /mnt/server\nmkdir -p /home/container\n\n# =========================\n# DOWNLOAD START MODULES FROM GITHUB\n# =========================\n\necho \"Downloading start-modules.sh...\"\ncurl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o /mnt/server/start-modules.sh\n\n# FIX: move to runtime directory\ncp /mnt/server/start-modules.sh /home/container/start-modules.sh\nchmod +x /home/container/start-modules.sh\n\n# =========================\n# CLOUDFLARED INSTALL\n# =========================\n\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\necho \"install complete\"\nexit 0"
     }
   },
 
   "variables": [
     {
-      "name": "Next.js Version",
-      "env_variable": "NEXT_VERSION",
-      "default_value": "latest",
+      "name": "Node Version Selector (Image Picker)",
+      "env_variable": "NODE_IMAGE",
+      "default_value": "ghcr.io/parkervcp/yolks:nodejs_20",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|string"
+      "rules": "required|string",
+      "field_type": "text"
     },
+
     {
       "name": "Node ENV",
       "env_variable": "NODE_RUN_ENV",
@@ -60,6 +62,7 @@
       "user_editable": true,
       "rules": "required|string|in:start,dev"
     },
+
     {
       "name": "Package Manager",
       "env_variable": "PACKAGE_MANAGER",
@@ -68,45 +71,41 @@
       "user_editable": true,
       "rules": "required|string|in:auto,npm,pnpm,yarn"
     },
+
     {
-      "name": "Git Repository URL",
+      "name": "Git Repo",
       "env_variable": "GIT_URL",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
       "rules": "nullable|string"
     },
+
     {
-      "name": "Branch",
-      "env_variable": "GIT_BRANCH",
-      "default_value": "",
-      "user_viewable": true,
-      "user_editable": true,
-      "rules": "nullable|string"
-    },
-    {
-      "name": "Auto Update",
-      "env_variable": "AUTO_UPDATE",
+      "name": "Cloudflared Enable",
+      "env_variable": "CLOUDFLARED_STATUS",
       "default_value": "0",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|boolean"
     },
+
     {
-      "name": "Git Username",
-      "env_variable": "USERNAME",
+      "name": "Cloudflared Token",
+      "env_variable": "CLOUDFLARED_TOKEN",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
       "rules": "nullable|string"
     },
+
     {
-      "name": "Git Access Token",
-      "env_variable": "ACCESS_TOKEN",
-      "default_value": "",
+      "name": "Cron Enable",
+      "env_variable": "CRON_STATUS",
+      "default_value": "0",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "nullable|string"
+      "rules": "required|boolean"
     }
   ]
 }
