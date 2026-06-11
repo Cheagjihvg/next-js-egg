@@ -29,9 +29,11 @@
   "startup": "cd /home/container && if [ \"${EGG_AUTO_UPDATE}\" = \"1\" ]; then echo '[AUTO-UPDATE] Updating start-modules.sh from GitHub...'; curl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o start-modules.sh; chmod +x start-modules.sh; fi; bash ./start-modules.sh",
 
   "config": {
-    "files": "{}",
-    "startup": "{ \"done\": \"Server ready\" }",
-    "logs": "{}",
+    "files": {},
+    "startup": {
+      "done": "Server ready"
+    },
+    "logs": {},
     "stop": "^C"
   },
 
@@ -39,7 +41,7 @@
     "installation": {
       "container": "node:20-bullseye-slim",
       "entrypoint": "bash",
-      "script": "##!/bin/bash\nset -e\n\napt update\napt install -y git curl wget cron bash\n\nmkdir -p /mnt/server\nmkdir -p /home/container\n\n# =========================\n# DOWNLOAD START MODULES FROM GITHUB\n# =========================\n\necho \"Downloading start-modules.sh...\"\ncurl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o /mnt/server/start-modules.sh\n\ncp /mnt/server/start-modules.sh /home/container/start-modules.sh\nchmod +x /home/container/start-modules.sh\n\n# =========================\n# CLOUDFLARED INSTALL\n# =========================\n\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\necho \"install complete\"\nexit 0"
+      "script": "#!/bin/bash\nset -e\n\napt update\napt install -y git curl wget cron bash\n\nmkdir -p /mnt/server\nmkdir -p /home/container\n\n# =========================\n# DOWNLOAD START MODULES FROM GITHUB\n# =========================\n\necho \"Downloading start-modules.sh...\"\ncurl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o /mnt/server/start-modules.sh\n\ncp /mnt/server/start-modules.sh /home/container/start-modules.sh\nchmod +x /home/container/start-modules.sh\n\n# =========================\n# CLOUDFLARED INSTALL\n# =========================\n\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\necho \"install complete\"\nexit 0"
     }
   },
 
