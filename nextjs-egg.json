@@ -8,7 +8,7 @@
   "exported_at": "2026-06-11T00:00:00+00:00",
 
   "name": "Next JS (Modules + GitHub + Cloudflared + Cron + Auto Update)",
-  "author": "kun@joopdev.com",
+  "author": "somnangc03@gmail.com",
   "description": "Next.js egg with Node version selector, GitHub module loader, Cloudflare Tunnel, Cron, and Auto Update system.",
 
   "features": [],
