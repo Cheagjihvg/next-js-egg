@@ -1,20 +1,25 @@
 {
-  "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+  "_comment": "Next.js Full Modules Egg (Fixed)",
   "meta": {
     "version": "PTDL_v2",
     "update_url": "https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/nextjs-egg.json"
   },
-  "exported_at": "2026-06-11T00:00:00+00:00",
-  "name": "Next JS (Modules + Cloudflared + Cron)",
-  "author": "info@joopdev.com",
-  "description": "Next.js with modular startup system, Cloudflare Tunnel, and Cron support.",
+
+  "name": "Next JS (Full Modules + Cloudflared + Cron)",
+  "author": "custom",
+  "description": "Full Next.js server with version control, modules, cloudflared, and cron support.",
+
   "docker_images": {
-    "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20"
+    "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22",
+    "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20",
+    "Node.js 18": "ghcr.io/parkervcp/yolks:nodejs_18"
   },
+
   "startup": "bash ./start-modules.sh",
+
   "config": {
     "files": "{}",
-    "startup": "{\"done\": \"Server ready\"}",
+    "startup": "{\"done\": \"ready\"}",
     "logs": "{}",
     "stop": "^C"
   },
@@ -23,34 +28,58 @@
     "installation": {
       "container": "node:20-bullseye-slim",
       "entrypoint": "bash",
-      "script": "#!/bin/bash\napt update\napt install -y git curl wget cron bash\n\nmkdir -p /mnt/server/modules\n\n# install cloudflared\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\n# =========================\n# AUTO CREATE MODULE FILE\n# =========================\n\necho \"[Modules] Creating start-modules.sh...\"\n\ncat > /mnt/server/start-modules.sh << 'EOF'\n#!/bin/bash\n\necho \"[Modules] Starting Next.js...\"\n\n# Start Next.js\nnpx next start -H 0.0.0.0 -p ${SERVER_PORT} &\nNEXT_PID=$!\n\n# =========================\n# CRON MODULE\n# =========================\nif [ \"${CRON_STATUS}\" = \"1\" ]; then\n  echo \"[Modules] Starting Cron...\"\n  service cron start >/dev/null 2>&1 || true\n  cron -f &\nfi\n\n# =========================\n# CLOUDFLARED MODULE\n# =========================\nif [ \"${CLOUDFLARED_STATUS}\" = \"1\" ]; then\n  echo \"[Modules] Starting Cloudflared Tunnel...\"\n  cloudflared tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN} &\nfi\n\nwait $NEXT_PID\nEOF\n\nchmod +x /mnt/server/start-modules.sh\n\necho \"install complete\"\nexit 0"
+      "script": "#!/bin/bash\napt update\napt install -y git curl wget cron bash\n\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\ncat > /mnt/server/start-modules.sh << 'EOF'\n#!/bin/bash\n\n# NEXT VERSION INSTALL (AUTO)\nif [ ! -f package.json ]; then\n  echo \"Creating Next.js project...\"\n  npm init -y\n  npm install next@${NEXT_VERSION:-latest} react react-dom\nfi\n\n# START NEXT\nnpx next start -H 0.0.0.0 -p ${SERVER_PORT} &\nNEXT_PID=$!\n\n# CRON MODULE\nif [ \"${CRON_STATUS}\" = \"1\" ]; then\n  service cron start || true\n  cron -f &\nfi\n\n# CLOUDFLARED MODULE\nif [ \"${CLOUDFLARED_STATUS}\" = \"1\" ]; then\n  cloudflared tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN} &\nfi\n\nwait $NEXT_PID\nEOF\n\nchmod +x /mnt/server/start-modules.sh\n\necho \"install complete\"\nexit 0"
     }
   },
 
   "variables": [
     {
+      "name": "Next.js Version",
+      "env_variable": "NEXT_VERSION",
+      "default_value": "latest",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
+    },
+    {
+      "name": "Node Version",
+      "env_variable": "NODE_VERSION",
+      "default_value": "20",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string"
+    },
+    {
+      "name": "Run Mode",
+      "env_variable": "NODE_RUN_ENV",
+      "default_value": "start",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string|in:start,dev"
+    },
+    {
       "name": "Cloudflared Enable",
       "env_variable": "CLOUDFLARED_STATUS",
       "default_value": "0",
-      "rules": "required|boolean",
       "user_viewable": true,
-      "user_editable": true
+      "user_editable": true,
+      "rules": "required|boolean"
     },
     {
       "name": "Cloudflared Token",
       "env_variable": "CLOUDFLARED_TOKEN",
       "default_value": "",
-      "rules": "nullable|string",
       "user_viewable": true,
-      "user_editable": true
+      "user_editable": true,
+      "rules": "nullable|string"
     },
     {
       "name": "Cron Enable",
       "env_variable": "CRON_STATUS",
       "default_value": "0",
-      "rules": "required|boolean",
       "user_viewable": true,
-      "user_editable": true
+      "user_editable": true,
+      "rules": "required|boolean"
     }
   ]
 }
