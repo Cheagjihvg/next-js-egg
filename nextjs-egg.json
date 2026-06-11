@@ -9,11 +9,17 @@
   "author": "custom",
   "description": "Full Next.js server with version control, modules, cloudflared, and cron support.",
 
-  "docker_images": {
-    "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22",
-    "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20",
-    "Node.js 18": "ghcr.io/parkervcp/yolks:nodejs_18"
-  },
+"docker_images": {
+  "Node.js 26": "ghcr.io/parkervcp/yolks:nodejs_26",
+  "Node.js 25": "ghcr.io/parkervcp/yolks:nodejs_25",
+  "Node.js 24": "ghcr.io/parkervcp/yolks:nodejs_24",
+  "Node.js 23": "ghcr.io/parkervcp/yolks:nodejs_23",
+  "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22",
+  "Node.js 21": "ghcr.io/parkervcp/yolks:nodejs_21",
+  "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20",
+  "Node.js 19": "ghcr.io/parkervcp/yolks:nodejs_19",
+  "Node.js 18": "ghcr.io/parkervcp/yolks:nodejs_18"
+}
 
   "startup": "bash ./start-modules.sh",
 
