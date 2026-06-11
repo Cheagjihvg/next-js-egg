@@ -1,0 +1,56 @@
+{
+  "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
+  "meta": {
+    "version": "PTDL_v2",
+    "update_url": "https://raw.githubusercontent.com/joopdev/nextjs-egg-pterodactyl/refs/heads/main/nextjs-egg.json"
+  },
+  "exported_at": "2026-06-11T00:00:00+00:00",
+  "name": "Next JS (Modules + Cloudflared + Cron)",
+  "author": "info@joopdev.com",
+  "description": "Next.js with modular startup system, Cloudflare Tunnel, and Cron support.",
+  "docker_images": {
+    "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20"
+  },
+  "startup": "bash ./start-modules.sh",
+  "config": {
+    "files": "{}",
+    "startup": "{\"done\": \"Server ready\"}",
+    "logs": "{}",
+    "stop": "^C"
+  },
+
+  "scripts": {
+    "installation": {
+      "container": "node:20-bullseye-slim",
+      "entrypoint": "bash",
+      "script": "#!/bin/bash\napt update\napt install -y git curl wget cron bash\n\nmkdir -p /mnt/server/modules\n\n# install cloudflared\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\n# =========================\n# AUTO CREATE MODULE FILE\n# =========================\n\necho \"[Modules] Creating start-modules.sh...\"\n\ncat > /mnt/server/start-modules.sh << 'EOF'\n#!/bin/bash\n\necho \"[Modules] Starting Next.js...\"\n\n# Start Next.js\nnpx next start -H 0.0.0.0 -p ${SERVER_PORT} &\nNEXT_PID=$!\n\n# =========================\n# CRON MODULE\n# =========================\nif [ \"${CRON_STATUS}\" = \"1\" ]; then\n  echo \"[Modules] Starting Cron...\"\n  service cron start >/dev/null 2>&1 || true\n  cron -f &\nfi\n\n# =========================\n# CLOUDFLARED MODULE\n# =========================\nif [ \"${CLOUDFLARED_STATUS}\" = \"1\" ]; then\n  echo \"[Modules] Starting Cloudflared Tunnel...\"\n  cloudflared tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN} &\nfi\n\nwait $NEXT_PID\nEOF\n\nchmod +x /mnt/server/start-modules.sh\n\necho \"install complete\"\nexit 0"
+    }
+  },
+
+  "variables": [
+    {
+      "name": "Cloudflared Enable",
+      "env_variable": "CLOUDFLARED_STATUS",
+      "default_value": "0",
+      "rules": "required|boolean",
+      "user_viewable": true,
+      "user_editable": true
+    },
+    {
+      "name": "Cloudflared Token",
+      "env_variable": "CLOUDFLARED_TOKEN",
+      "default_value": "",
+      "rules": "nullable|string",
+      "user_viewable": true,
+      "user_editable": true
+    },
+    {
+      "name": "Cron Enable",
+      "env_variable": "CRON_STATUS",
+      "default_value": "0",
+      "rules": "required|boolean",
+      "user_viewable": true,
+      "user_editable": true
+    }
+  ]
+}
