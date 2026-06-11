@@ -2,7 +2,7 @@
   "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
   "meta": {
     "version": "PTDL_v2",
-    "update_url": "https://raw.githubusercontent.com/joopdev/nextjs-egg-pterodactyl/refs/heads/main/nextjs-egg.json"
+    "update_url": "https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/nextjs-egg.json"
   },
   "exported_at": "2026-06-11T00:00:00+00:00",
   "name": "Next JS (Modules + Cloudflared + Cron)",
