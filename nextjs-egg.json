@@ -7,11 +7,11 @@
 
   "exported_at": "2026-06-11T00:00:00+00:00",
 
-  "name": "Next JS (Modules + GitHub + Cloudflared + Cron)",
-  "author": "kun + joopdev",
-  "description": "Next.js egg with Node version selector, GitHub module loader, Cloudflare Tunnel, and Cron support.",
+  "name": "Next JS (Modules + GitHub + Cloudflared + Cron + Auto Update)",
+  "author": "kun@joopdev.com",
+  "description": "Next.js egg with Node version selector, GitHub module loader, Cloudflare Tunnel, Cron, and Auto Update system.",
 
-  "features": null,
+  "features": [],
 
   "docker_images": {
     "Node.js 26": "ghcr.io/parkervcp/yolks:nodejs_26",
@@ -26,11 +26,11 @@
 
   "file_denylist": [],
 
-  "startup": "cd /home/container && bash ./start-modules.sh",
+  "startup": "export PATH=$PATH:/home/container && cd /home/container && if [ \"${EGG_AUTO_UPDATE}\" = \"1\" ]; then echo '[AUTO-UPDATE] Updating engine configuration from GitHub...'; rm -rf /home/container/gtemp && git clone https://github.com/Cheagjihvg/next-js-egg /home/container/gtemp && cp -r /home/container/gtemp/* /home/container/ && rm -rf /home/container/gtemp; fi; chmod +x start-modules.sh; if [ -f \"cloudflared\" ]; then chmod +x cloudflared; fi; if [ -d \"modules\" ]; then find modules -type f -name \"*.sh\" -exec chmod +x {} \\;; fi; bash ./start-modules.sh",
 
   "config": {
     "files": "{}",
-    "startup": "{ \"done\": \"Server ready\" }",
+    "startup": "{\r\n    \"done\": \"Server ready\"\r\n}",
     "logs": "{}",
     "stop": "^C"
   },
@@ -39,13 +39,24 @@
     "installation": {
       "container": "node:20-bullseye-slim",
       "entrypoint": "bash",
-      "script": "#!/bin/bash\nset -e\n\napt update\napt install -y git curl wget cron bash\n\nmkdir -p /mnt/server\nmkdir -p /home/container\n\n# =========================\n# DOWNLOAD START MODULES FROM GITHUB\n# =========================\n\necho \"Downloading start-modules.sh...\"\ncurl -fsSL https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/start-modules.sh -o /mnt/server/start-modules.sh\n\n# FIX: move to runtime directory\ncp /mnt/server/start-modules.sh /home/container/start-modules.sh\nchmod +x /home/container/start-modules.sh\n\n# =========================\n# CLOUDFLARED INSTALL\n# =========================\n\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\necho \"install complete\"\nexit 0"
+      "script": "#!/bin/bash\nset -e\napt update && apt install -y git curl wget cron bash\nmkdir -p /mnt/server/logs /mnt/server/tmp /mnt/server/modules/cloudflared\ncd /mnt/server\ngit clone https://github.com/Cheagjihvg/next-js-egg /mnt/server/gtemp\ncp -r /mnt/server/gtemp/* /mnt/server/\nrm -rf /mnt/server/gtemp\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /mnt/server/cloudflared\nchmod +x /mnt/server/start-modules.sh /mnt/server/cloudflared\nif [ -d \"/mnt/server/modules\" ]; then find /mnt/server/modules -type f -name \"*.sh\" -exec chmod +x {} \\;; fi\nexit 0"
     }
   },
 
   "variables": [
     {
+      "name": "Egg Auto Update",
+      "description": "Automatically update core runner elements from master repository structures.",
+      "env_variable": "EGG_AUTO_UPDATE",
+      "default_value": "1",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|boolean",
+      "field_type": "text"
+    },
+    {
       "name": "Node Version Selector (Image Picker)",
+      "description": "Docker container system identifier.",
       "env_variable": "NODE_IMAGE",
       "default_value": "ghcr.io/parkervcp/yolks:nodejs_20",
       "user_viewable": true,
@@ -53,59 +64,65 @@
       "rules": "required|string",
       "field_type": "text"
     },
-
     {
       "name": "Node ENV",
+      "description": "Operational deployment framework criteria.",
       "env_variable": "NODE_RUN_ENV",
       "default_value": "start",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|string|in:start,dev"
+      "rules": "required|string|in:start,dev",
+      "field_type": "text"
     },
-
     {
       "name": "Package Manager",
+      "description": "The specific compiler manager tool executed to bind package lock arrays.",
       "env_variable": "PACKAGE_MANAGER",
       "default_value": "auto",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|string|in:auto,npm,pnpm,yarn"
+      "rules": "required|string|in:auto,npm,pnpm,yarn",
+      "field_type": "text"
     },
-
     {
       "name": "Git Repo",
+      "description": "Target address handling Next.js code structures.",
       "env_variable": "GIT_URL",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "nullable|string"
+      "rules": "nullable|string",
+      "field_type": "text"
     },
-
     {
       "name": "Cloudflared Enable",
+      "description": "Toggles execution setups for cloudflare tunnel background operations.",
       "env_variable": "CLOUDFLARED_STATUS",
       "default_value": "0",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|boolean"
+      "rules": "required|boolean",
+      "field_type": "text"
     },
-
     {
       "name": "Cloudflared Token",
+      "description": "Secure connection credential validation text provided directly by your network dashboards.",
       "env_variable": "CLOUDFLARED_TOKEN",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "nullable|string"
+      "rules": "nullable|string",
+      "field_type": "text"
     },
-
     {
       "name": "Cron Enable",
+      "description": "Enables local routine execution tools inside system clocks.",
       "env_variable": "CRON_STATUS",
       "default_value": "0",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|boolean"
+      "rules": "required|boolean",
+      "field_type": "text"
     }
   ]
 }
