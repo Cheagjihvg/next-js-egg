@@ -1,31 +1,36 @@
 {
-  "_comment": "Next.js Full Modules Egg (Fixed)",
+  "_comment": "DO NOT EDIT: FILE GENERATED AUTOMATICALLY BY PTERODACTYL PANEL - PTERODACTYL.IO",
   "meta": {
     "version": "PTDL_v2",
-    "update_url": "https://raw.githubusercontent.com/Cheagjihvg/next-js-egg/refs/heads/main/nextjs-egg.json"
+    "update_url": "https://raw.githubusercontent.com/joopdev/nextjs-egg-pterodactyl/refs/heads/main/nextjs-egg.json"
   },
 
-  "name": "Next JS (Full Modules + Cloudflared + Cron)",
-  "author": "custom",
-  "description": "Full Next.js server with version control, modules, cloudflared, and cron support.",
+  "exported_at": "2025-12-17T14:00:00+01:00",
+  "name": "Next JS",
+  "author": "info@joopdev.com",
+  "description": "Host a Next.js application with reliable 0.0.0.0 binding and auto package manager detection.",
 
-"docker_images": {
-  "Node.js 26": "ghcr.io/parkervcp/yolks:nodejs_26",
-  "Node.js 25": "ghcr.io/parkervcp/yolks:nodejs_25",
-  "Node.js 24": "ghcr.io/parkervcp/yolks:nodejs_24",
-  "Node.js 23": "ghcr.io/parkervcp/yolks:nodejs_23",
-  "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22",
-  "Node.js 21": "ghcr.io/parkervcp/yolks:nodejs_21",
-  "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20",
-  "Node.js 19": "ghcr.io/parkervcp/yolks:nodejs_19",
-  "Node.js 18": "ghcr.io/parkervcp/yolks:nodejs_18"
-}
+  "features": null,
 
-  "startup": "bash ./start-modules.sh",
+  "docker_images": {
+    "Node.js 26": "ghcr.io/parkervcp/yolks:nodejs_26",
+    "Node.js 25": "ghcr.io/parkervcp/yolks:nodejs_25",
+    "Node.js 24": "ghcr.io/parkervcp/yolks:nodejs_24",
+    "Node.js 23": "ghcr.io/parkervcp/yolks:nodejs_23",
+    "Node.js 22": "ghcr.io/parkervcp/yolks:nodejs_22",
+    "Node.js 21": "ghcr.io/parkervcp/yolks:nodejs_21",
+    "Node.js 20": "ghcr.io/parkervcp/yolks:nodejs_20",
+    "Node.js 19": "ghcr.io/parkervcp/yolks:nodejs_19",
+    "Node.js 18": "ghcr.io/parkervcp/yolks:nodejs_18"
+  },
+
+  "file_denylist": [],
+
+  "startup": "cd /home/container; if [ ! -f package.json ]; then echo 'No package.json found. Creating Next.js project...'; npm init -y; npm pkg set type=\"module\"; npm pkg set scripts.dev=\"next dev\"; npm pkg set scripts.build=\"next build\"; npm pkg set scripts.start=\"next start\"; npm install next@${NEXT_VERSION:-latest} react react-dom; fi; if [ \"${AUTO_UPDATE}\" = \"1\" ] && [ -d .git ]; then git pull; fi; corepack enable >/dev/null 2>&1 || true; PM=${PACKAGE_MANAGER:-auto}; if [ \"$PM\" = \"auto\" ]; then if [ -f pnpm-lock.yaml ]; then PM=pnpm; elif [ -f yarn.lock ]; then PM=yarn; else PM=npm; fi; fi; if [ \"$NODE_RUN_ENV\" = \"start\" ]; then echo 'Building Next.js...'; $PM run build; fi; echo 'Starting Next.js...'; $PM run ${NODE_RUN_ENV} -H 0.0.0.0 -p ${SERVER_PORT}",
 
   "config": {
     "files": "{}",
-    "startup": "{\"done\": \"ready\"}",
+    "startup": "{\n  \"done\": \"ready in\"\n}",
     "logs": "{}",
     "stop": "^C"
   },
@@ -34,7 +39,7 @@
     "installation": {
       "container": "node:20-bullseye-slim",
       "entrypoint": "bash",
-      "script": "#!/bin/bash\napt update\napt install -y git curl wget cron bash\n\ncurl -fsSL https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-amd64 -o /usr/local/bin/cloudflared\nchmod +x /usr/local/bin/cloudflared\n\ncat > /mnt/server/start-modules.sh << 'EOF'\n#!/bin/bash\n\n# NEXT VERSION INSTALL (AUTO)\nif [ ! -f package.json ]; then\n  echo \"Creating Next.js project...\"\n  npm init -y\n  npm install next@${NEXT_VERSION:-latest} react react-dom\nfi\n\n# START NEXT\nnpx next start -H 0.0.0.0 -p ${SERVER_PORT} &\nNEXT_PID=$!\n\n# CRON MODULE\nif [ \"${CRON_STATUS}\" = \"1\" ]; then\n  service cron start || true\n  cron -f &\nfi\n\n# CLOUDFLARED MODULE\nif [ \"${CLOUDFLARED_STATUS}\" = \"1\" ]; then\n  cloudflared tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN} &\nfi\n\nwait $NEXT_PID\nEOF\n\nchmod +x /mnt/server/start-modules.sh\n\necho \"install complete\"\nexit 0"
+      "script": "#!/bin/bash\napt update\napt install -y git curl jq file unzip make gcc g++ python3 libtool\n\nmkdir -p /mnt/server\ncd /mnt/server\n\nif [ -n \"${GIT_URL}\" ]; then\n    if [[ ${GIT_URL} != *.git ]]; then\n        GIT_URL=${GIT_URL%/}.git\n    fi\n\n    if [ -n \"${USERNAME}\" ] && [ -n \"${ACCESS_TOKEN}\" ]; then\n        GIT_URL=\"https://${USERNAME}:${ACCESS_TOKEN}@$(echo ${GIT_URL} | cut -d/ -f3-)\"\n    fi\n\n    if [ ! \"$(ls -A /mnt/server)\" ]; then\n        git clone \"${GIT_URL}\" .\n    fi\nfi\n\nif [ -f /mnt/server/package.json ]; then\n    corepack enable >/dev/null 2>&1 || true\n    PM=${PACKAGE_MANAGER:-auto}\n\n    if [ \"$PM\" = \"auto\" ]; then\n        if [ -f pnpm-lock.yaml ]; then PM=pnpm;\n        elif [ -f yarn.lock ]; then PM=yarn;\n        else PM=npm;\n        fi\n    fi\n\n    if [ \"$PM\" = \"pnpm\" ]; then pnpm install --prod;\n    elif [ \"$PM\" = \"yarn\" ]; then yarn install;\n    else npm install;\n    fi\nfi\n\necho \"install complete\"\nexit 0"
     }
   },
 
@@ -48,15 +53,7 @@
       "rules": "required|string"
     },
     {
-      "name": "Node Version",
-      "env_variable": "NODE_VERSION",
-      "default_value": "20",
-      "user_viewable": true,
-      "user_editable": true,
-      "rules": "required|string"
-    },
-    {
-      "name": "Run Mode",
+      "name": "Node ENV",
       "env_variable": "NODE_RUN_ENV",
       "default_value": "start",
       "user_viewable": true,
@@ -64,28 +61,52 @@
       "rules": "required|string|in:start,dev"
     },
     {
-      "name": "Cloudflared Enable",
-      "env_variable": "CLOUDFLARED_STATUS",
-      "default_value": "0",
+      "name": "Package Manager",
+      "env_variable": "PACKAGE_MANAGER",
+      "default_value": "auto",
       "user_viewable": true,
       "user_editable": true,
-      "rules": "required|boolean"
+      "rules": "required|string|in:auto,npm,pnpm,yarn"
     },
     {
-      "name": "Cloudflared Token",
-      "env_variable": "CLOUDFLARED_TOKEN",
+      "name": "Git Repository URL",
+      "env_variable": "GIT_URL",
       "default_value": "",
       "user_viewable": true,
       "user_editable": true,
       "rules": "nullable|string"
     },
     {
-      "name": "Cron Enable",
-      "env_variable": "CRON_STATUS",
+      "name": "Branch",
+      "env_variable": "GIT_BRANCH",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string"
+    },
+    {
+      "name": "Auto Update",
+      "env_variable": "AUTO_UPDATE",
       "default_value": "0",
       "user_viewable": true,
       "user_editable": true,
       "rules": "required|boolean"
+    },
+    {
+      "name": "Git Username",
+      "env_variable": "USERNAME",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string"
+    },
+    {
+      "name": "Git Access Token",
+      "env_variable": "ACCESS_TOKEN",
+      "default_value": "",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "nullable|string"
     }
   ]
 }
