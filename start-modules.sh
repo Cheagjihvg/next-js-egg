@@ -69,11 +69,17 @@ else
 fi
 
 # =========================
-# BUILD (ONLY START MODE)
+# BUILD ENGINE CHECK (CONDITIONAL)
 # =========================
+SHOULD_BUILD=${BUILD_NEXT:-true}
+
 if [ "${NODE_RUN_ENV}" = "start" ]; then
-  echo "[Modules] Building..."
-  $PM run build
+  if [[ "$SHOULD_BUILD" =~ ^(false|0)$ ]]; then
+    echo "[Modules] BUILD_NEXT is set to false/0. Skipping compilation step to protect existing build folder assets."
+  else
+    echo "[Modules] Building Next.js application..."
+    $PM run build
+  fi
 fi
 
 # =========================
