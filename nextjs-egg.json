@@ -75,6 +75,16 @@
       "field_type": "text"
     },
     {
+      "name": "Build Next.js Application",
+      "description": "Toggles Next.js compilation step on boot. Set to false or 0 to bypass and protect your existing build files.",
+      "env_variable": "BUILD_NEXT",
+      "default_value": "true",
+      "user_viewable": true,
+      "user_editable": true,
+      "rules": "required|string",
+      "field_type": "text"
+    },
+    {
       "name": "Package Manager",
       "description": "The specific compiler manager tool executed to bind package lock arrays.",
       "env_variable": "PACKAGE_MANAGER",
