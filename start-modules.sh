@@ -86,11 +86,24 @@ if [ "${CRON_STATUS}" = "1" ]; then
 fi
 
 # =========================
-# CLOUDFLARED MODULE
+# CLOUDFLARED MODULE (FIXED PATHS)
 # =========================
 if [ "${CLOUDFLARED_STATUS}" = "1" ]; then
   echo "[Modules] Starting Cloudflared..."
-  cloudflared tunnel --no-autoupdate run --token ${CLOUDFLARED_TOKEN} &
+  
+  # Smart variable pathway targeting local workspace execution instances
+  CF_BINARY="cloudflared"
+  
+  if [ -f "/home/container/cloudflared" ]; then
+    CF_BINARY="/home/container/cloudflared"
+    chmod +x "$CF_BINARY"
+  elif [ -f "/home/container/modules/cloudflared/cloudflared" ]; then
+    CF_BINARY="/home/container/modules/cloudflared/cloudflared"
+    chmod +x "$CF_BINARY"
+  fi
+
+  # Boot tunnel via determined local executable footprint link 
+  $CF_BINARY tunnel --no-autoupdate run --token "${CLOUDFLARED_TOKEN}" &
 fi
 
 # =========================
